@@ -2,17 +2,23 @@ import { Elysia, t } from "elysia";
 import { DashboardController } from "../controllers/dashboard.controller";
 
 export const dashboardRoutes = new Elysia({ prefix: '/dashboard' })
-    .get('/summary', async ({ query }) => {
-        const data = await DashboardController.getSummary(query.userId);
+    .get('/summary', async ({ user }) => {
+        const userId = (user as any).sub;
+        const data = await DashboardController.getSummary(userId);
         return { success: true, data };
     }, {
-        query: t.Object({ userId: t.String() }),
-        detail: { tags: ['Dashboard'] }
+        detail: { 
+            tags: ['Dashboard'],
+            summary: "Get dashboard summary for authenticated user"
+        }
     })
-    .get('/weekly', async ({ query }) => {
-        const data = await DashboardController.getWeeklyOverview(query.userId);
+    .get('/weekly', async ({ user }) => {
+        const userId = (user as any).sub;
+        const data = await DashboardController.getWeeklyOverview(userId);
         return { success: true, data };
     }, {
-        query: t.Object({ userId: t.String() }),
-        detail: { tags: ['Dashboard'] }
+        detail: { 
+            tags: ['Dashboard'],
+            summary: "Get weekly overview for authenticated user"
+        }
     });
