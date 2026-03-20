@@ -31,3 +31,7 @@ const app = new Elysia()
 console.log(
     `🚀 Server is running at ${app.server?.hostname}:${app.server?.port}`
 );
+
+console.log(
+    `🚀 Swagger UI is running at http://${app.server?.hostname}:${app.server?.port}/swagger`
+);

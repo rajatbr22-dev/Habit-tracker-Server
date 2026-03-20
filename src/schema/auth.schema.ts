@@ -33,3 +33,18 @@ export const loginSchema = t.Object({
     }),
     
 })
+
+
+
+export const forgotPasswordSchema = t.Object({
+
+    email: t.String({
+        format: "email"
+    }),
+
+    newPassword: t.String({
+        minLength: 6,
+        maxLength: 100,
+    })
+    
+})

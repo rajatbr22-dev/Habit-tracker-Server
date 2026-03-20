@@ -1,7 +1,7 @@
 import { Elysia, t } from "elysia";
 import { AuthController } from "../controllers/auth.controller";
 import { jwt } from "@elysiajs/jwt";
-import { loginSchema, registerSchema } from "../schema/auth.schema";
+import { forgotPasswordSchema, loginSchema, registerSchema } from "../schema/auth.schema";
 
 export const authRoutes = new Elysia({ prefix: '/auth' })
     .use(jwt({
@@ -21,6 +21,15 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
         detail: { 
             tags: ["Auth"],
             summary: "login/sign in user"
+        }
+    })
+    
+    .post("/forgot-password", AuthController.forgotPassword, {
+        body: forgotPasswordSchema,
+
+        detail: {
+            tags: ["Auth"],
+            summary: "Forgot Password"
         }
     });
     
