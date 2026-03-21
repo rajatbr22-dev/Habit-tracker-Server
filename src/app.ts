@@ -54,7 +54,7 @@ export const app = new Elysia()
                 },
                 servers: [
                     {
-                        url: "http://localhost:8000/api",
+                        url: "http://localhost:8000",
                         description: "Local API Server"
                     }
                 ],
@@ -72,7 +72,7 @@ export const app = new Elysia()
 
                     },
                 },
-                security: [{ bearerAuth: [] }],
+                // security: [{ bearerAuth: [] }],
             },
         })
     )

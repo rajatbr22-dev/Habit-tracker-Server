@@ -10,11 +10,7 @@ export const HabitController = {
         user,
         set,
         query,
-    } : {
-        user: JwtPayload,
-        set: any,
-        query: GetAllHabitsQueryType
-    }) => {
+    } : any) => {
         
         if(!user.sub){
 
@@ -67,7 +63,7 @@ export const HabitController = {
 
                 page,
                 pageSize,
-                total: count,
+                total: Number(count),
                 totalPages: Math.ceil(count / pageSize),
 
             };
@@ -97,12 +93,7 @@ export const HabitController = {
         user,
         body,
         set
-    } : {
-        user: JwtPayload,
-        body: CreateHabitType,
-        set: any
-
-    }) => {
+    } : any) => {
         const {
             name,
             color,

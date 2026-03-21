@@ -1,17 +1,13 @@
-import { App } from "../app";
+import { Elysia } from "elysia";
 import { JwtPayload } from "../types/types";
 import { logger } from "../utils/logger";
 
-export const authMiddleware = (app: App) =>
-    app.derive<{ user: JwtPayload }>(async ({ jwt, request, set }) => {
+export const authMiddleware = new Elysia({ name: "authMiddleware" })
+    .derive({ as: 'global' }, async ({ jwt, request, set }: any) => {
 
         const authHeader =
         request.headers.get("authorization") ??
         request.headers.get("Authorization");
-
-        // console.log("AUTH HEADER =>", request.headers.get("authorization"));
-        // console.log("ALL HEADERS =>", Object.fromEntries(request.headers.entries()));
-
 
         if (!authHeader) {
 
@@ -38,7 +34,7 @@ export const authMiddleware = (app: App) =>
 
         const token = rawToken.replace(/^"|"$/g, "").trim();
 
-        const payload = await jwt.verify(token) as JwtPayload;
+        const payload = await (jwt as any).verify(token) as JwtPayload;
 
         if (!payload) {
 

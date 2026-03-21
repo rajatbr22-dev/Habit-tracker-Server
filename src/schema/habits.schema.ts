@@ -37,6 +37,8 @@ export const createHabit = t.Object({
 
     goalValue: t.Optional(t.Number()),
 
+    reminderTime: t.Optional(t.String({ format: "date-time" })),
+
     goalUnit: t.Optional(t.String()),
 
 });

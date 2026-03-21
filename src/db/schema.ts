@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, integer, uuid, primaryKey, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, integer, uuid, primaryKey, pgEnum, time, date } from "drizzle-orm/pg-core";
 
 export const frequencyEnum = pgEnum('frequency', ['daily', 'weekly', 'custom']);
 export const habitStatusEnum = pgEnum('habit_status', ['active', 'archived', 'deleted']);
@@ -41,7 +41,13 @@ export const habits = pgTable("habits", {
   goalValue: integer("goal_value"),
   goalUnit: text("goal_unit"),
   status: habitStatusEnum("status").default("active").notNull(),
-  reminderTime: text("reminder_time"),
+  reminderTime: time("reminder_time"),
+
+  currentStreak: integer("current_streak").default(0).notNull(),
+  longestStreak: integer("longest_streak").default(0).notNull(),
+  lastCompletedAt: date("last_completed_at"),
+
+
   sortOrder: integer("sort_order").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -49,8 +55,15 @@ export const habits = pgTable("habits", {
 
 export const checkIns = pgTable("check_ins", {
   id: uuid("id").primaryKey().defaultRandom(),
+
   habitId: uuid("habit_id").references(() => habits.id).notNull(),
-  date: text("date").notNull(), // ISO Date String YYYY-MM-DD
+
+  userId: uuid("user_id")
+    .references(() => users.id)
+    .notNull(),
+
+  date: date("date").notNull(),
+  
   completed: boolean("completed").default(true).notNull(),
   value: integer("value"),
   note: text("note"),
