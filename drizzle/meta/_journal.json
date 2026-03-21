@@ -15,6 +15,13 @@
       "when": 1773994930334,
       "tag": "0001_dark_tattoo",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1774103616382,
+      "tag": "0002_amused_phantom_reporter",
+      "breakpoints": true
     }
   ]
 }

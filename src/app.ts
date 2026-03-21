@@ -52,6 +52,12 @@ export const app = new Elysia()
                     version: "1.0.0",
                     
                 },
+                servers: [
+                    {
+                        url: "http://localhost:8000/api",
+                        description: "Local API Server"
+                    }
+                ],
 
                 components: {
 

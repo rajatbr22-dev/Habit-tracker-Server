@@ -3,6 +3,7 @@ import { pgTable, text, timestamp, boolean, integer, uuid, primaryKey, pgEnum } 
 export const frequencyEnum = pgEnum('frequency', ['daily', 'weekly', 'custom']);
 export const habitStatusEnum = pgEnum('habit_status', ['active', 'archived', 'deleted']);
 export const categoryEnum = pgEnum('category', ['health', 'productivity', 'fitness', 'mindfulness', 'financial', 'social', 'other']);
+export const subscriptionStatusEnum = pgEnum('subscription_status', ['none', 'active', 'expired', 'past_due', 'trialing']);
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -10,8 +11,20 @@ export const users = pgTable("users", {
   displayName: text("display_name").notNull(),
   avatarUrl: text("avatar_url"),
   passwordHash: text("password_hash").notNull(),
+  subscriptionStatus: subscriptionStatusEnum("subscription_status").default("none").notNull(),
+  premiumUntil: timestamp("premium_until"),
+  adaptyId: text("adapty_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const userSubscriptions = pgTable("user_subscriptions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  adaptyProfileId: text("adapty_profile_id"),
+  eventType: text("event_type").notNull(),
+  payload: text("payload").notNull(), // Store full JSON payload as string
+  processedAt: timestamp("processed_at").defaultNow().notNull(),
 });
 
 export const habits = pgTable("habits", {

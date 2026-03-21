@@ -1,9 +1,9 @@
-import { Elysia, t } from "elysia";
+import { app } from "./app";
 import { cors } from "@elysiajs/cors";
 import { authRoutes } from "./routes/auth.routes";
 import { habitRoutes } from "./routes/habits.routes";
-import { dashboardRoutes } from "./routes/dashboard";
-import { app } from "./app";
+import { dashboardRoutes } from "./routes/dashboard.routes";
+import { paymentRoutes } from "./routes/payment.routes";
 
 app
     .use(cors())
@@ -12,6 +12,7 @@ app
             .use(authRoutes)
             .use(habitRoutes)
             .use(dashboardRoutes)
+            .use(paymentRoutes)
     )
     .listen(8000);
 

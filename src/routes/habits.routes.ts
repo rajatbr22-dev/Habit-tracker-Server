@@ -3,24 +3,20 @@ import { HabitController } from "../controllers/habit.controller";
 import { createHabit } from "../schema/habits.schema";
 import { JwtPayload } from "../types/types";
 import { authMiddleware } from "../middleware/auth.middleware";
+import { getAllHabitsQuery } from "../schema/query/getHabits.query.schema";
 
 export const habitRoutes = new Elysia({ prefix: '/habits' })
     .use(authMiddleware)
-    .get('/', async ({ user }) => {
-
-        const userId = (user as JwtPayload).sub
-
-        const allHabits = await HabitController.getAll(userId);
-
-        return { success: true, data: allHabits };
-    }, {
+    .get('',  HabitController.getAll,{
+        query: getAllHabitsQuery,
         detail: { 
             tags: ['Habits'],
-            summary: "Get all habits for the authenticated user"
+            summary: "Get all habits for the authenticated user",
+            security: [{ bearerAuth: [] }],
         }
     })
 
-    .post('/', HabitController.create, {
+    .post('', HabitController.create, {
         body: createHabit,
         detail: { 
             tags: ['Habits'],
