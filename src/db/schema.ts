@@ -1,4 +1,8 @@
-import { pgTable, text, timestamp, boolean, integer, uuid, primaryKey } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, integer, uuid, primaryKey, pgEnum } from "drizzle-orm/pg-core";
+
+export const frequencyEnum = pgEnum('frequency', ['daily', 'weekly', 'custom']);
+export const habitStatusEnum = pgEnum('habit_status', ['active', 'archived', 'deleted']);
+export const categoryEnum = pgEnum('category', ['health', 'productivity', 'fitness', 'mindfulness', 'financial', 'social', 'other']);
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -16,14 +20,14 @@ export const habits = pgTable("habits", {
   name: text("name").notNull(),
   icon: text("icon"),
   color: text("color").notNull(),
-  category: text("category").notNull(), // e.g., 'health', 'productivity'
-  frequency: text("frequency").notNull(), // 'daily', 'weekly', 'custom'
+  category: categoryEnum("category").notNull(), 
+  frequency: frequencyEnum("frequency").notNull(), 
   targetCount: integer("target_count").default(1).notNull(),
   customDays: text("custom_days").array(), // Array of days like ['Mon', 'Wed']
   goalLabel: text("goal_label"),
   goalValue: integer("goal_value"),
   goalUnit: text("goal_unit"),
-  status: text("status").default("active").notNull(),
+  status: habitStatusEnum("status").default("active").notNull(),
   reminderTime: text("reminder_time"),
   sortOrder: integer("sort_order").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),

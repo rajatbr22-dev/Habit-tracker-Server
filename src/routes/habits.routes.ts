@@ -24,7 +24,8 @@ export const habitRoutes = new Elysia({ prefix: '/habits' })
         body: createHabit,
         detail: { 
             tags: ['Habits'],
-            summary: "Add/Create new Habit for authenticated user"
+            summary: "Add/Create new Habit for authenticated user",
+            security: [{ bearerAuth: [] }],
         }
     })
 

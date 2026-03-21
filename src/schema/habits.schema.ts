@@ -11,9 +11,21 @@ export const createHabit = t.Object({
         t.String()
     ),
 
-    category: t.String(),
+    category: t.Enum({
+        health: 'health',
+        productivity: 'productivity',
+        fitness: 'fitness',
+        mindfulness: 'mindfulness',
+        financial: 'financial',
+        social: 'social',
+        other: 'other'
+    }),
 
-    frequency: t.String(),
+    frequency: t.Enum({
+        daily: 'daily',
+        weekly: 'weekly',
+        custom: 'custom'
+    }),
 
     icon: t.Optional(t.String()),
 

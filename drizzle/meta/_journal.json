@@ -8,6 +8,13 @@
       "when": 1773661680631,
       "tag": "0000_equal_juggernaut",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1773994930334,
+      "tag": "0001_dark_tattoo",
+      "breakpoints": true
     }
   ]
 }

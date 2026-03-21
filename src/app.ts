@@ -48,7 +48,7 @@ export const app = new Elysia()
 
                 info: {
 
-                    title: "HRMS API",
+                    title: "Habit Tracker",
                     version: "1.0.0",
                     
                 },

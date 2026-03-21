@@ -35,9 +35,32 @@ export const HabitController = {
         
 
         try {
-            
+            const [newHabit] = await db.insert(habits).values({
+                userId: user.sub,
+                name,
+                color: color ?? "#4A90E2",
+                category: category as any,
+                frequency: frequency as any,
+                icon: icon,
+                targetCount: targetCount ?? 1,
+                customDays,
+                goalLabel,
+                goalValue,
+                goalUnit,
+            }).returning();
+
+            return {
+                success: true,
+                message: "Habit created successfully",
+                data: newHabit
+            };
         } catch (error) {
-            
+            console.error("Error creating habit:", error);
+            set.status = 500;
+            return {
+                success: false,
+                message: "Failed to create habit"
+            };
         }
     },
     
