@@ -1,6 +1,6 @@
 import { Elysia, t } from "elysia";
 import { HabitController } from "../controllers/habit.controller";
-import { createHabit } from "../schema/habits.schema";
+import { createHabit, createHabitCheckIns } from "../schema/habits.schema";
 import { JwtPayload } from "../types/types";
 import { authMiddleware } from "../middleware/auth.middleware";
 import { getAllHabitsQuery } from "../schema/query/getHabits.query.schema";
@@ -26,19 +26,12 @@ export const habitRoutes = new Elysia({ prefix: '/habits' })
             }
         })
 
-        .post('/checkin', async ({ body }) => {
-            const checkin = await HabitController.checkIn(body);
-            return { success: true, data: checkin };
-        }, {
-            body: t.Object({
-                habitId: t.String(),
-                date: t.String(),
-                completed: t.Boolean(),
-                value: t.Optional(t.Number()),
-                note: t.Optional(t.String()),
-            }),
+        .post('/checkin', HabitController.checkIn
+            , {
+            body: createHabitCheckIns,
             detail: { 
                 tags: ['Habits'],
+                summary: "Toggle habit current stats update",
                 security: [{ bearerAuth: [] }],
             }
         })

@@ -1,7 +1,7 @@
 import { db } from "../db";
 import { habits, checkIns, users } from "../db/schema";
 import { eq, and, sql } from "drizzle-orm";
-import { CreateHabitType, GetAllHabitsQueryType, JwtPayload } from "../types/types";
+import { CreateHabitCheckIns, CreateHabitType, GetAllHabitsQueryType, JwtPayload } from "../types/types";
 import { logger } from "../utils/logger";
 import { createResponse } from "../utils/responseReusable";
 
@@ -241,8 +241,81 @@ export const HabitController = {
         }
     },
     
-    checkIn: async (data: any) => {
-        const [checkin] = await db.insert(checkIns).values(data).returning();
-        return checkin;
+    checkIn: async ({
+        user,
+        set,
+        body,
+    }: {
+        user: JwtPayload,
+        set: any,
+        body: CreateHabitCheckIns
+    }) => {
+        
+        const {
+            habitId,
+            completed
+        } = body;
+
+        if(!habitId || !completed){
+            logger.error("Missing required fields for habit check-in");
+
+            set.status = 400;
+
+            return {
+                success: false,
+                message: "Missing required fields for habit check-in"
+            };
+        }
+
+        try {
+            const [existingCheckIns] = await db
+                .select()
+                .from(checkIns)
+                .where(
+                    and(
+                        eq(checkIns.userId, user.sub),
+                        eq(habits.id, habitId)
+                    )
+                );
+
+            if(!existingCheckIns){
+
+                logger.error("Habit check-in already exists");
+
+                set.status = 404;
+
+                return createResponse({
+                    success: false,
+                    message: "Habit not found"
+                })
+            }
+
+            const [newCheckIn] = await db
+                .insert(checkIns)
+                .values({
+                    habitId: habitId,
+                    userId: user.sub,
+                    date: new Date().toISOString().split("T")[0],
+                    completed: completed,
+                }).returning();
+
+            return createResponse({
+                success: true,
+                message: "Habit check-in successful",
+                data: newCheckIn
+            });
+
+        } catch (error) {
+
+            logger.error("Error checking in to habit", error);
+
+            set.status = 500;
+
+            return createResponse({
+                success: false,
+                message: "Failed to check in to habit",
+                data: error
+            });
+        }
     }
 };

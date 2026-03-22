@@ -12,5 +12,9 @@ export const getAllHabitsQuery = t.Object({
 
     search: t.Optional(
         t.String({ minLength: 1 })
+    ),
+
+    categoryFrequency: t.Optional(
+        t.String()
     )
 })

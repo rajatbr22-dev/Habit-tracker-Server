@@ -37,8 +37,26 @@ export const createHabit = t.Object({
 
     goalValue: t.Optional(t.Number()),
 
+    meta: t.Optional(t.String({
+        minLength: 2,
+        maxLength: 50
+    })),
+
+    notes: t.Optional(t.String({
+        minLength: 2,
+        maxLength: 100
+    })),
+
     reminderTime: t.Optional(t.String({ format: "time" })),
 
     goalUnit: t.Optional(t.String()),
 
 });
+
+export const createHabitCheckIns = t.Object({
+    habitId: t.String({
+        format: "uuid"
+    }),
+
+    completed: t.Boolean()
+})

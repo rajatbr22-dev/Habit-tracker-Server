@@ -48,6 +48,10 @@ export const habits = pgTable("habits", {
   lastCompletedAt: date("last_completed_at"),
 
 
+  notes: text("notes"),
+  meta: text("meta"),
+
+
   sortOrder: integer("sort_order").default(0).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

@@ -8,6 +8,13 @@
       "when": 1774117878038,
       "tag": "0000_silent_blindfold",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1774162557626,
+      "tag": "0001_keen_stryfe",
+      "breakpoints": true
     }
   ]
 }
