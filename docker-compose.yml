@@ -1,24 +1,21 @@
 services:
-  server:
-    build: .
-    ports:
-      - "3000:3000"
-    environment:
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/habits
-    depends_on:
-      db:
-        condition: service_healthy
-
   db:
-    image: postgres:15-alpine
+    image: postgres:16
+    container_name: habit_postgres
+    restart: always
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=habits
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: habit_tracker
     ports:
       - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d habit_tracker"]
       interval: 5s
       timeout: 5s
       retries: 5
+
+volumes:
+  postgres_data:

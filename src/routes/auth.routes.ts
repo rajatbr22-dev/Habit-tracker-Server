@@ -1,26 +1,30 @@
 import { Elysia, t } from "elysia";
 import { AuthController } from "../controllers/auth.controller";
-import { jwt } from "@elysiajs/jwt";
+import { forgotPasswordSchema, loginSchema, registerSchema } from "../schema/auth.schema";
 
 export const authRoutes = new Elysia({ prefix: '/auth' })
-    .use(jwt({
-        name: 'jwt',
-        secret: process.env.JWT_SECRET || 'habit-tracker-secret-key-2026'
-    }))
     .post('/register', AuthController.register, {
-        body: t.Object({
-            email: t.String(),
-            password: t.String(),
-            displayName: t.String()
-        }),
-        detail: { tags: ['Auth'] }
+        body: registerSchema,
+        detail: { 
+            tags: ['Auth'],
+            summary: "Sign up a new user"
+        }
     })
 
     .post('/login', AuthController.login, {
-        body: t.Object({
-            email: t.String(),
-            password: t.String()
-        }),
-        detail: { tags: ['Auth'] }
+        body: loginSchema,
+        detail: { 
+            tags: ["Auth"],
+            summary: "login/sign in user"
+        }
+    })
+    
+    .post("/forgot-password", AuthController.forgotPassword, {
+        body: forgotPasswordSchema,
+
+        detail: {
+            tags: ["Auth"],
+            summary: "Forgot Password"
+        }
     });
     

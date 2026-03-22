@@ -2,11 +2,45 @@ import { db } from "../db";
 import { users } from "../db/schema";
 import { eq } from "drizzle-orm";
 import { logger } from "../utils/logger";
+import { createResponse } from "../utils/responseReusable";
 
 export const AuthController = {
+
     register: async ({ body, set, jwt }: any) => {
+
         logger.info(`POST /auth/register - Request received for: ${body.email}`);
+
+        const { email, password, displayName } = body;
+
+        if(!email || !password || !displayName) {
+
+            set.status = 401
+
+            return createResponse({
+                success: false,
+                message: "Name, email and password are required"
+            })
+        }
+
+
+        const existingUsers = await db
+            .select()
+            .from(users)
+            .where(eq(users.email, body.email))
+
+        if(existingUsers.length > 0) {
+
+            set.status = 400
+
+            return createResponse({
+                success: false,
+                message: "User is already registered"
+            })
+        }
+
+
         try {
+
             const passwordHash = await Bun.password.hash(body.password);
             const [user] = await db.insert(users).values({
                 email: body.email,
@@ -16,6 +50,8 @@ export const AuthController = {
             
             const token = await jwt.sign({ sub: user.id });
             logger.info(`User registered successfully: ${user.id}`);
+
+            set.status = 200
 
             return {
                 success: true,
@@ -47,13 +83,20 @@ export const AuthController = {
     },
     
     login: async ({ body, set, jwt }: any) => {
+
         logger.info(`POST /auth/login - Request received for: ${body.email}`);
+
         try {
-            const [user] = await db.select().from(users).where(eq(users.email, body.email));
+            const [user] = await db
+                .select()
+                .from(users)
+                .where(eq(users.email, body.email));
             
             if (!user) {
                 logger.warn(`Login failed: Email not found - ${body.email}`);
+
                 set.status = 401;
+
                 return { 
                     success: false, 
                     message: 'User not found',
@@ -104,6 +147,68 @@ export const AuthController = {
         } catch (error: any) {
             logger.error(`Error finding user by email ${email}: ${error.message}`);
             throw error;
+        }
+    },
+
+
+    forgotPassword: async ({ body, set }: any) => {
+        const { email, newPassword } = body;
+
+        if (!email || !newPassword) {
+
+            set.status = 400
+
+            return createResponse({
+                success: false,
+                message: "email and new password is required"
+            });
+
+        }
+
+        try {
+            const [user] = await db
+            .select()
+            .from(users)
+            .where(eq(users.email, email));
+
+            if (!user) {
+                set.status = 401
+                return createResponse({
+                    success: false,
+                    message: "Email is not registered. Create new account"
+                });
+            }
+
+            const passwordHash = await Bun.password.hash(newPassword);
+
+            await db
+            .update(users)
+            .set({
+                passwordHash,
+                updatedAt: new Date(),
+            })
+            .where(eq(users.email, email));
+
+            logger.info("Password reset successfully", email);
+
+            set.status = 200
+
+            return createResponse({
+                success: true,
+                message: "Password reset successfully"
+            });
+
+        } catch (error) {
+
+            set.status = 500
+
+            logger.error("Forgot password failed", error);
+
+            return createResponse({
+                success: false,
+                message: "Failed to reset password"
+            });
+
         }
     }
 };
