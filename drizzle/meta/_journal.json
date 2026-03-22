@@ -5,29 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1773661680631,
-      "tag": "0000_equal_juggernaut",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1773994930334,
-      "tag": "0001_dark_tattoo",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1774103616382,
-      "tag": "0002_amused_phantom_reporter",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1774115365762,
-      "tag": "0003_abnormal_sentinels",
+      "when": 1774117878038,
+      "tag": "0000_silent_blindfold",
       "breakpoints": true
     }
   ]

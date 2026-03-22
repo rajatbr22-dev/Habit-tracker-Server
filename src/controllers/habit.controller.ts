@@ -93,7 +93,11 @@ export const HabitController = {
         user,
         body,
         set
-    } : any) => {
+    } : {
+        user: JwtPayload,
+        body: CreateHabitType,
+        set: any
+    }) => {
         const {
             name,
             color,
@@ -104,7 +108,8 @@ export const HabitController = {
             customDays,
             goalLabel,
             goalUnit,
-            goalValue
+            goalValue,
+            reminderTime,
         } = body;
 
 
@@ -218,6 +223,7 @@ export const HabitController = {
                 goalLabel,
                 goalValue,
                 goalUnit,
+                reminderTime
             }).returning();
 
             return {
