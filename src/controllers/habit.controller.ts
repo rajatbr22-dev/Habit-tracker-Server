@@ -31,9 +31,33 @@ export const HabitController = {
         const offset = (page - 1) * pageSize;
 
         try {
+
+            const today = new Date().toISOString().split("T")[0];
+
             const allHabits = await db
-                .select()
+                .select({
+                    id: habits.id,
+                    name: habits.name,
+                    category: habits.category,
+                    meta: habits.meta,
+                    currentStreak: habits.currentStreak,
+                    icon: habits.icon,
+                    color: habits.color,
+                    frequency: habits.frequency,
+                    targetCount: habits.targetCount,
+                    reminderTime: habits.reminderTime,
+                    createdAt: habits.createdAt,
+                    completed: checkIns.completed,
+                })
                 .from(habits)
+                .leftJoin(
+                    checkIns,
+                    and(
+                    eq(checkIns.habitId, habits.id),
+                    eq(checkIns.userId, user.sub),
+                    eq(checkIns.date, today)
+                    )
+                )
                 .where(eq(habits.userId, user.sub))
                 .limit(pageSize)
                 .offset(offset)
@@ -256,46 +280,68 @@ export const HabitController = {
             completed
         } = body;
 
-        if(!habitId || !completed){
+        if(!habitId || completed === undefined){
             logger.error("Missing required fields for habit check-in");
 
             set.status = 400;
 
-            return {
+            return createResponse({
                 success: false,
                 message: "Missing required fields for habit check-in"
-            };
+            });
         }
 
+        const today = new Date().toISOString().split("T")[0];
+
         try {
-            const [existingCheckIns] = await db
+            // 1. Verify habit exists and belongs to the user
+            const [habit] = await db
+                .select()
+                .from(habits)
+                .where(
+                    and(
+                        eq(habits.id, habitId),
+                        eq(habits.userId, user.sub)
+                    )
+                );
+
+            if (!habit) {
+                logger.error("Habit not found or doesn't belong to user");
+                set.status = 404;
+                return createResponse({
+                    success: false,
+                    message: "Habit not found"
+                });
+            }
+
+            // 2. Check if check-in for today already exists
+            const [existingCheckIn] = await db
                 .select()
                 .from(checkIns)
                 .where(
                     and(
                         eq(checkIns.userId, user.sub),
-                        eq(habits.id, habitId)
+                        eq(checkIns.habitId, habitId),
+                        eq(checkIns.date, today)
                     )
                 );
 
-            if(!existingCheckIns){
-
-                logger.error("Habit check-in already exists");
-
-                set.status = 404;
-
+            if (existingCheckIn) {
+                logger.info("Habit check-in for today already exists");
+                set.status = 400;
                 return createResponse({
                     success: false,
-                    message: "Habit not found"
-                })
+                    message: "Habit already checked-in for today"
+                });
             }
 
+            // 3. Perform check-in
             const [newCheckIn] = await db
                 .insert(checkIns)
                 .values({
                     habitId: habitId,
                     userId: user.sub,
-                    date: new Date().toISOString().split("T")[0],
+                    date: today,
                     completed: completed,
                 }).returning();
 
