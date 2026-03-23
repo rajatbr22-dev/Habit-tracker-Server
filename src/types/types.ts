@@ -30,3 +30,15 @@ export interface ApiResponse<T = any> {
 
 
 export type GetAllHabitsQueryType = Static<typeof getAllHabitsQuery>;
+
+
+export type Frequency = "daily" | "weekly" | "custom";
+
+export type Category =
+  | "health"
+  | "productivity"
+  | "fitness"
+  | "mindfulness"
+  | "financial"
+  | "social"
+  | "other";

@@ -1,7 +1,7 @@
 import { pgTable, text, timestamp, boolean, integer, uuid, primaryKey, pgEnum, time, date } from "drizzle-orm/pg-core";
 
-export const frequencyEnum = pgEnum('frequency', ['daily', 'weekly', 'custom']);
 export const habitStatusEnum = pgEnum('habit_status', ['active', 'archived', 'deleted']);
+export const frequencyEnum = pgEnum('frequency', ['daily', 'weekly', 'custom']);
 export const categoryEnum = pgEnum('category', ['health', 'productivity', 'fitness', 'mindfulness', 'financial', 'social', 'other']);
 export const subscriptionStatusEnum = pgEnum('subscription_status', ['none', 'active', 'expired', 'past_due', 'trialing']);
 

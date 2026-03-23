@@ -16,5 +16,9 @@ export const getAllHabitsQuery = t.Object({
 
     categoryFrequency: t.Optional(
         t.String()
+    ),
+
+    date: t.Optional(
+        t.String({ format: "date"})
     )
 })

@@ -1,7 +1,7 @@
 import { db } from "../db";
 import { habits, checkIns, users } from "../db/schema";
-import { eq, and, sql } from "drizzle-orm";
-import { CreateHabitCheckIns, CreateHabitType, GetAllHabitsQueryType, JwtPayload } from "../types/types";
+import { eq, and, sql, or, ilike, SQL, desc } from "drizzle-orm";
+import { Category, CreateHabitCheckIns, CreateHabitType, Frequency, GetAllHabitsQueryType, JwtPayload } from "../types/types";
 import { logger } from "../utils/logger";
 import { createResponse } from "../utils/responseReusable";
 
@@ -10,7 +10,11 @@ export const HabitController = {
         user,
         set,
         query,
-    } : any) => {
+    } : {
+        user:JwtPayload,
+        set: any,
+        query: GetAllHabitsQueryType
+    }) => {
         
         if(!user.sub){
 
@@ -30,9 +34,41 @@ export const HabitController = {
     
         const offset = (page - 1) * pageSize;
 
+        logger.info("query data", query)
+
         try {
 
-            const today = new Date().toISOString().split("T")[0];
+            const today = query.date ?? new Date().toISOString().split("T")[0];
+
+            const normalize = (value: string) => value.trim().toLowerCase();
+
+            const normalizedCategory =
+                query.categoryFrequency && query.categoryFrequency !== "All"
+                    ? normalize(query.categoryFrequency)
+                    : undefined;
+
+            const VALID_CATEGORIES = ["health", "productivity", "fitness", "mindfulness", "financial", "social", "other"];
+            const VALID_FREQUENCIES = ["daily", "weekly", "custom"];
+
+            const isCategory = VALID_CATEGORIES.includes(normalizedCategory as any);
+            const isFrequency = VALID_FREQUENCIES.includes(normalizedCategory as any);
+
+            const categoryFrequencyFilters = [];
+            if (isCategory) categoryFrequencyFilters.push(eq(habits.category, normalizedCategory as Category));
+            if (isFrequency) categoryFrequencyFilters.push(eq(habits.frequency, normalizedCategory as Frequency));
+
+
+            const filters = [
+            eq(habits.userId, user.sub),
+            eq(habits.status, "active"),
+            categoryFrequencyFilters.length > 0
+                ? or(...categoryFrequencyFilters)
+                : undefined,
+            query.search
+                ? ilike(habits.name, `%${query.search}%`)
+                : undefined
+            ].filter(Boolean) as SQL[];
+
 
             const allHabits = await db
                 .select({
@@ -58,16 +94,20 @@ export const HabitController = {
                     eq(checkIns.date, today)
                     )
                 )
-                .where(eq(habits.userId, user.sub))
+                .where(
+                    and(
+                        ...filters
+                    )
+                )
                 .limit(pageSize)
                 .offset(offset)
-                .orderBy(habits.createdAt);
+                .orderBy(desc(habits.createdAt));
 
 
             const [{count}] = await db
                 .select({ count: sql<number>`count(*)` })
                 .from(habits)
-                .where(eq(habits.userId, user.sub));
+                .where(and(...filters));
 
             
             if(allHabits.length <= 0){
@@ -92,22 +132,28 @@ export const HabitController = {
 
             };
 
+            const formattedHabits = allHabits.map(h => ({
+                ...h,
+                completed: h.completed ?? false
+            }));
+
             return createResponse({
                 success: true,
                 message: "Habits fetched successfully",
-                data: allHabits,
+                data: formattedHabits,
                 pagination
             })
 
         } catch (error) {
 
-            logger.error("Error fetching habits");
+            logger.error("Error fetching habits", error);
 
             set.status = 500;
 
             return createResponse({
                 success: false,
-                message: "Error fetching habits"
+                message: "Error fetching habits",
+                
             })
 
         }
@@ -292,6 +338,9 @@ export const HabitController = {
         }
 
         const today = new Date().toISOString().split("T")[0];
+        const yesterdayDate = new Date();
+        yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+        const yesterday = yesterdayDate.toISOString().split("T")[0];
 
         try {
             // 1. Verify habit exists and belongs to the user
@@ -335,20 +384,57 @@ export const HabitController = {
                 });
             }
 
-            // 3. Perform check-in
-            const [newCheckIn] = await db
-                .insert(checkIns)
-                .values({
-                    habitId: habitId,
-                    userId: user.sub,
-                    date: today,
-                    completed: completed,
-                }).returning();
+            // 3. Calculate Streaks
+            let newStreak = habit.currentStreak || 0;
+            let newLongestStreak = habit.longestStreak || 0;
+            let lastCompletedAt = habit.lastCompletedAt;
+
+            if (completed) {
+                // If last completion was yesterday, increment
+                if (habit.lastCompletedAt === yesterday) {
+                    newStreak += 1;
+                } 
+                // If it's the first check-in or streak was broken
+                else if (habit.lastCompletedAt !== today) {
+                    newStreak = 1;
+                }
+                
+                newLongestStreak = Math.max(newStreak, newLongestStreak);
+                lastCompletedAt = today;
+            } else {
+                // If marked as not completed, reset current streak
+                newStreak = 0;
+            }
+
+            // 4. Perform check-in and habit update in a transaction
+            const result = await db.transaction(async (tx) => {
+                const [checkIn] = await tx
+                    .insert(checkIns)
+                    .values({
+                        habitId: habitId,
+                        userId: user.sub,
+                        date: today,
+                        completed: completed,
+                    })
+                    .returning();
+
+                await tx
+                    .update(habits)
+                    .set({
+                        currentStreak: newStreak,
+                        longestStreak: newLongestStreak,
+                        lastCompletedAt: lastCompletedAt,
+                        updatedAt: new Date(),
+                    })
+                    .where(eq(habits.id, habitId));
+
+                return checkIn;
+            });
 
             return createResponse({
                 success: true,
                 message: "Habit check-in successful",
-                data: newCheckIn
+                data: result
             });
 
         } catch (error) {
