@@ -1,5 +1,5 @@
 import { Static } from "elysia";
-import { createHabit, createHabitCheckIns } from "../schema/habits.schema";
+import { createHabit, createHabitCheckIns, updateHabit } from "../schema/habits.schema";
 import { getAllHabitsQuery } from "../schema/query/getHabits.query.schema";
 
 export type JwtPayload = {
@@ -12,6 +12,7 @@ export type JwtPayload = {
 
 export type CreateHabitType = Static<typeof createHabit>;
 export type CreateHabitCheckIns = Static<typeof createHabitCheckIns>;
+export type UpdateHabitType = Static<typeof updateHabit>;
 
 
 export interface Pagination {

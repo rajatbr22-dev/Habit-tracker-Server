@@ -60,3 +60,5 @@ export const createHabitCheckIns = t.Object({
 
     completed: t.Boolean()
 })
+
+export const updateHabit = t.Partial(createHabit);
