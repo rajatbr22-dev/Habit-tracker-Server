@@ -6,24 +6,29 @@ export const dashboardRoutes = new Elysia({ prefix: '/dashboard' })
     .group("", app => app
         .use(authMiddleware)
         .get('/summary', async ({ user }) => {
-            const userId = user.sub;
-            const data = await DashboardController.getSummary(userId);
-            return { success: true, data };
+            return await DashboardController.getSummary(user.sub);
         }, {
             detail: { 
                 tags: ['Dashboard'],
-                summary: "Get dashboard summary for authenticated user",
+                summary: "Get dashboard summary stats (streaks, completion, etc.)",
                 security: [{ bearerAuth: [] }],
             }
         })
         .get('/weekly', async ({ user }) => {
-            const userId = user.sub;
-            const data = await DashboardController.getWeeklyOverview(userId);
-            return { success: true, data };
+            return await DashboardController.getWeeklyOverview(user.sub);
         }, {
             detail: { 
                 tags: ['Dashboard'],
-                summary: "Get weekly overview for authenticated user",
+                summary: "Get weekly habit completion overview",
+                security: [{ bearerAuth: [] }],
+            }
+        })
+        .get('/today-habits', async ({ user }) => {
+            return await DashboardController.getTodayHabits(user.sub);
+        }, {
+            detail: { 
+                tags: ['Dashboard'],
+                summary: "Get list of habits for today with progress and streaks",
                 security: [{ bearerAuth: [] }],
             }
         })
