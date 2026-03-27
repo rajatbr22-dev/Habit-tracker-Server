@@ -2,6 +2,7 @@ import { db } from "../db";
 import { users, userSubscriptions } from "../db/schema";
 import { eq } from "drizzle-orm";
 import { logger } from "../utils/logger";
+import { NotificationService } from "../services/notification.service";
 
 export const PaymentController = {
     handleWebhook: async ({ body, headers, set }: { body: any, headers: Record<string, string | undefined>, set: any }) => {
@@ -77,6 +78,15 @@ export const PaymentController = {
                         .where(eq(users.id, customer_user_id));
                     
                     logger.info(`Updated subscription for user ${customer_user_id} to ${status}`);
+
+                    if (event_type === 'subscription_started' || event_type === 'subscription_renewed') {
+                        await NotificationService.createNotification({
+                            userId: customer_user_id,
+                            title: "Premium Activated! 💎",
+                            message: "Thank you for supporting Habit Tracker. Your premium features are now active!",
+                            type: 'premium'
+                        });
+                    }
                 }
             }
 

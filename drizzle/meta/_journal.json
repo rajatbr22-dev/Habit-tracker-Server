@@ -15,6 +15,13 @@
       "when": 1774162557626,
       "tag": "0001_keen_stryfe",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1774354633271,
+      "tag": "0002_overjoyed_spyke",
+      "breakpoints": true
     }
   ]
 }

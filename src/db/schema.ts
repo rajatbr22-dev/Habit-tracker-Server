@@ -161,3 +161,29 @@ export const checkIns = pgTable("check_ins", {
   .notNull(),
 
 });
+
+export const notificationTypeEnum = pgEnum('notification_type', [
+  'habit_due', 
+  'habit_missed', 
+  'habit_completed', 
+  'motivational', 
+  'premium', 
+  'system', 
+  'streak_milestone'
+]);
+
+export const notifications = pgTable("notifications", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id).notNull(),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  type: notificationTypeEnum("type").notNull(),
+  isRead: boolean("is_read").default(false).notNull(),
+  metadata: text("metadata"), // Store as JSON string
+  
+  scheduledAt: timestamp("scheduled_at"),
+  deliveredAt: timestamp("delivered_at"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});

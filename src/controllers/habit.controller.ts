@@ -4,6 +4,7 @@ import { eq, and, sql, or, ilike, SQL, desc } from "drizzle-orm";
 import { Category, CreateHabitCheckIns, CreateHabitType, Frequency, GetAllHabitsQueryType, JwtPayload, UpdateHabitType } from "../types/types";
 import { logger } from "../utils/logger";
 import { createResponse } from "../utils/responseReusable";
+import { NotificationService } from "../services/notification.service";
 
 export const HabitController = {
     getAll: async ({
@@ -535,6 +536,28 @@ export const HabitController = {
                 return checkIn;
             });
 
+            if (completed) {
+                // Positive reinforcement notification
+                await NotificationService.createNotification({
+                    userId: user.sub,
+                    title: "Great job! 🌟",
+                    message: `You completed "${habit.name}"! Keeping the momentum going.`,
+                    type: 'habit_completed',
+                    metadata: { habitId, streak: newStreak }
+                });
+
+                // Streak milestone notification
+                if (newStreak > 0 && newStreak % 5 === 0) {
+                    await NotificationService.createNotification({
+                        userId: user.sub,
+                        title: "Streak Milestone! 🔥",
+                        message: `Unstoppable! You've hit a ${newStreak}-day streak for "${habit.name}".`,
+                        type: 'streak_milestone',
+                        metadata: { habitId, streak: newStreak }
+                    });
+                }
+            }
+
             return createResponse({
                 success: true,
                 message: "Habit check-in successful",
@@ -542,11 +565,8 @@ export const HabitController = {
             });
 
         } catch (error) {
-
             logger.error("Error checking in to habit", error);
-
             set.status = 500;
-
             return createResponse({
                 success: false,
                 message: "Failed to check in to habit",
