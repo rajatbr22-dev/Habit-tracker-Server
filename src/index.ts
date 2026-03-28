@@ -3,6 +3,7 @@ import { cors } from "@elysiajs/cors";
 import { authRoutes } from "./routes/auth.routes";
 import { habitRoutes } from "./routes/habits.routes";
 import { dashboardRoutes } from "./routes/dashboard.routes";
+import { analyticsRoutes } from "./routes/analytics.routes";
 import { paymentRoutes } from "./routes/payment.routes";
 import { notificationRoutes } from "./routes/notification.routes";
 import { initSocket } from "./socket";
@@ -15,6 +16,7 @@ app
             .use(authRoutes)
             .use(habitRoutes)
             .use(dashboardRoutes)
+            .use(analyticsRoutes)
             .use(paymentRoutes)
             .use(notificationRoutes)
     );

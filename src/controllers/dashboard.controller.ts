@@ -11,7 +11,7 @@ export const DashboardController = {
 
             // Total Habits
             const [habitStats] = await db
-                .select({ 
+                .select({
                     totalHabits: count(),
                     longestOverallStreak: max(habits.longestStreak)
                 })
@@ -34,8 +34,8 @@ export const DashboardController = {
                 .from(checkIns)
                 .where(eq(checkIns.userId, userId));
 
-            const completionRate = totalPossible.count > 0 
-                ? Math.round((totalDone.count / totalPossible.count) * 100) 
+            const completionRate = totalPossible.count > 0
+                ? Math.round((totalDone.count / totalPossible.count) * 100)
                 : 0;
 
             return createResponse({
@@ -71,7 +71,7 @@ export const DashboardController = {
             });
 
             const dayNames = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-            
+
             // Fetch all check-ins for the last 7 days for this user
             const recentCheckIns = await db
                 .select()
@@ -85,12 +85,12 @@ export const DashboardController = {
             const weeklyProgress = last7Days.map(dateStr => {
                 const dayDate = new Date(dateStr);
                 const dayName = dayNames[dayDate.getDay()];
-                
+
                 const dayCheckIns = recentCheckIns.filter(ci => ci.date === dateStr);
                 const isToday = dateStr === today.toISOString().split('T')[0];
-                
+
                 let status: 'done' | 'missed' | 'active' | 'pending' = 'pending';
-                
+
                 if (dayCheckIns.length > 0) {
                     const allCompleted = dayCheckIns.every(ci => ci.completed);
                     status = allCompleted ? 'done' : 'missed';
@@ -122,7 +122,7 @@ export const DashboardController = {
     getTodayHabits: async (userId: string) => {
         try {
             logger.info(`Fetching today's habits for user: ${userId}`);
-            
+
             const todayStr = new Date().toISOString().split('T')[0];
 
             // Get all active habits for the user
@@ -148,7 +148,7 @@ export const DashboardController = {
                 const checkIn = todayCheckIns.find(ci => ci.habitId === habit.id);
                 // Simple progress: 1 if checked in, 0 if not (could be more complex based on targetCount)
                 const progress = checkIn && checkIn.completed ? 1 : 0;
-                
+
                 return {
                     id: habit.id,
                     name: habit.name,

@@ -884,7 +884,8 @@ export const HabitController = {
                 return createResponse({ success: false, message: "Habit not found" });
             }
 
-            // 2. Fetch Check-ins for the last 365 days for heatmap and infographics
+            // 2. Fetch Check-ins for the last 365 days
+            const today = new Date();
             const oneYearAgo = new Date();
             oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
             const startDate = oneYearAgo.toISOString().split('T')[0];
@@ -901,77 +902,107 @@ export const HabitController = {
                 )
                 .orderBy(desc(checkIns.date));
 
-            // 3. Process Heatmap Data
-            // Format: { [date]: { completed: boolean, value?: number } }
-            const heatmapData = allCheckIns.reduce((acc: any, checkIn) => {
-                acc[checkIn.date] = {
-                    completed: checkIn.completed,
-                    value: checkIn.value
-                };
-                return acc;
-            }, {});
-
-            // 4. Process Weekly Stats (completion rate per day of week)
-            const dayOfWeekStats: { [key: string]: { completed: number, total: number } } = {
-                'Sunday': { completed: 0, total: 0 },
-                'Monday': { completed: 0, total: 0 },
-                'Tuesday': { completed: 0, total: 0 },
-                'Wednesday': { completed: 0, total: 0 },
-                'Thursday': { completed: 0, total: 0 },
-                'Friday': { completed: 0, total: 0 },
-                'Saturday': { completed: 0, total: 0 }
+            // 3. Define Expected Days Logic
+            const isExpectedOnDate = (date: Date): boolean => {
+                // Cannot be before habit was created
+                if (date < new Date(habit.createdAt)) return false;
+                
+                if (habit.frequency === 'daily') return true;
+                if (habit.frequency === 'weekly') {
+                    // Weekly habits might have specific targetCount, 
+                    // but for detail view we often just check if it was checked in.
+                    // For simplicity, we'll assume daily if not specified otherwise.
+                    return true; 
+                }
+                if (habit.frequency === 'custom' && habit.customDays) {
+                    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                    const dayName = days[date.getDay()];
+                    return habit.customDays.includes(dayName);
+                }
+                return true;
             };
 
+            // 4. Generate Comprehensive Data (including missed days)
+            const heatmapData: { [key: string]: { completed: boolean, value?: number, isExpected: boolean } } = {};
+            const dayOfWeekStats: { [key: string]: { completed: number, expected: number } } = {
+                'Sunday': { completed: 0, expected: 0 },
+                'Monday': { completed: 0, expected: 0 },
+                'Tuesday': { completed: 0, expected: 0 },
+                'Wednesday': { completed: 0, expected: 0 },
+                'Thursday': { completed: 0, expected: 0 },
+                'Friday': { completed: 0, expected: 0 },
+                'Saturday': { completed: 0, expected: 0 }
+            };
             const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-            allCheckIns.forEach(checkIn => {
-                const date = new Date(checkIn.date);
-                const dayName = days[date.getDay()];
-                dayOfWeekStats[dayName].total += 1;
-                if (checkIn.completed) {
-                    dayOfWeekStats[dayName].completed += 1;
-                }
-            });
-
-            // Calculate percentages
-            const weeklyProgress = Object.keys(dayOfWeekStats).map(day => ({
-                day,
-                percentage: dayOfWeekStats[day].total > 0 
-                    ? Math.round((dayOfWeekStats[day].completed / dayOfWeekStats[day].total) * 100) 
-                    : 0
-            }));
-
-            // 5. Completion Rate (Overall in the last year)
-            const totalCheckIns = allCheckIns.length;
-            const completedCount = allCheckIns.filter(c => c.completed).length;
-            const completionRate = totalCheckIns > 0 ? Math.round((completedCount / totalCheckIns) * 100) : 0;
-
-            // 6. Monthly Progress (Last 6 months)
-            const monthlyStats: { [key: string]: { completed: number, total: number } } = {};
+            
+            const monthlyStats: { [key: string]: { completed: number, expected: number } } = {};
             const last6Months = [];
             for (let i = 0; i < 6; i++) {
                 const d = new Date();
                 d.setMonth(d.getMonth() - i);
                 const monthYear = d.toLocaleString('default', { month: 'short', year: 'numeric' });
                 last6Months.push(monthYear);
-                monthlyStats[monthYear] = { completed: 0, total: 0 };
+                monthlyStats[monthYear] = { completed: 0, expected: 0 };
             }
 
-            allCheckIns.forEach(checkIn => {
-                const date = new Date(checkIn.date);
-                const monthYear = date.toLocaleString('default', { month: 'short', year: 'numeric' });
-                if (monthlyStats[monthYear]) {
-                    monthlyStats[monthYear].total += 1;
-                    if (checkIn.completed) {
-                        monthlyStats[monthYear].completed += 1;
+            let totalExpectedCount = 0;
+            let totalCompletedCount = 0;
+
+            // Iterate through each day of the last year
+            for (let d = new Date(oneYearAgo); d <= today; d.setDate(d.getDate() + 1)) {
+                const currentDate = new Date(d);
+                const dateStr = currentDate.toISOString().split('T')[0];
+                const isExpected = isExpectedOnDate(currentDate);
+
+                const checkIn = allCheckIns.find(ci => ci.date === dateStr);
+                const completed = checkIn?.completed ?? false;
+
+                if (isExpected) {
+                    totalExpectedCount++;
+                    if (completed) totalCompletedCount++;
+
+                    // Weekly Stats
+                    const dayName = days[currentDate.getDay()];
+                    dayOfWeekStats[dayName].expected++;
+                    if (completed) dayOfWeekStats[dayName].completed++;
+
+                    // Monthly Stats
+                    const monthYear = currentDate.toLocaleString('default', { month: 'short', year: 'numeric' });
+                    if (monthlyStats[monthYear]) {
+                        monthlyStats[monthYear].expected++;
+                        if (completed) monthlyStats[monthYear].completed++;
                     }
-                }
-            });
+
+                // Heatmap Data
+                heatmapData[dateStr] = {
+                    completed,
+                    value: checkIn?.value ?? undefined,
+                    isExpected: true
+                };
+            } else if (checkIn) {
+                // Even if not expected, if user checked in, show it!
+                heatmapData[dateStr] = {
+                    completed: true,
+                    value: checkIn.value ?? undefined,
+                    isExpected: false
+                };
+            }
+            }
+
+            // 5. Finalize Stats
+            const weeklyProgress = Object.keys(dayOfWeekStats).map(day => ({
+                day,
+                percentage: dayOfWeekStats[day].expected > 0 
+                    ? Math.round((dayOfWeekStats[day].completed / dayOfWeekStats[day].expected) * 100) 
+                    : 0
+            }));
+
+            const completionRate = totalExpectedCount > 0 ? Math.round((totalCompletedCount / totalExpectedCount) * 100) : 0;
 
             const monthlyProgress = last6Months.reverse().map(month => ({
                 month,
-                percentage: monthlyStats[month].total > 0 
-                    ? Math.round((monthlyStats[month].completed / monthlyStats[month].total) * 100) 
+                percentage: monthlyStats[month].expected > 0 
+                    ? Math.round((monthlyStats[month].completed / monthlyStats[month].expected) * 100) 
                     : 0
             }));
 
@@ -985,8 +1016,8 @@ export const HabitController = {
                         weeklyProgress,
                         monthlyProgress,
                         completionRate,
-                        totalCheckIns,
-                        completedCount
+                        totalExpectedCount,
+                        completedCount: totalCompletedCount
                     }
                 }
             });
